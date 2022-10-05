@@ -1,0 +1,2 @@
+# MaNNager
+Neural net manager 
