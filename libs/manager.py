@@ -111,7 +111,7 @@ class MaNNager:
         """
         import dill
         with open(path, 'wb') as f:
-            dill.dump(self, f)
+            dill.dump(self, f, recurse=True)
 
     @staticmethod
     def load(path):
