@@ -51,7 +51,7 @@ def dataframe_reshaper(tree, instruction, df_range=None, intermediate_tree_save_
             - save_path: path to save the resulting dataframe to
             - df_range: an iterable of form (begin, end, stride=1). If applied, reshaping is only performed on specified range
             - intermediate_tree_save_path: reshaped tree save path. If not specified, intermediate tree is discarded
-            - vectorization: if True, performs checks whether there are columns with vector types, effectively replacing them with numpy.arrays.
+            - vectorization: if True, performs checks whether there are columns with vector types, effectively replacing them with lists.
                 Disabling this feature is safe if you do not have vectorized data, otherwise behaviour is not well defined.
 
         Returns:
@@ -68,18 +68,17 @@ def dataframe_reshaper(tree, instruction, df_range=None, intermediate_tree_save_
     if not intermediate_tree_save_path == None:
         rdf.Snapshot('reshaped_tree', intermediate_tree_save_path,
                      {*instruction.keys()})
-
+    
     df = rdf.AsNumpy(columns=[*instruction.keys()])
-
+    
     if vectorization:
         import numpy as np
         for column in df.keys():
             # check if column is vector-like
             if len(np.array([df[column][0]]).shape) > 1:
-                # convert to numpy array
-                for index in range(len(df[column])):
-                    df[column][index] = np.array([df[column][index]])
+                # convert to lists
+                df[column] = map(lambda ar : list(ar), df[column])
     
     df = pd.DataFrame(df)
-
+    
     return df
