@@ -39,19 +39,42 @@ def save_instruction(file, object):
         import traceback
         print(traceback.print_exc())
 
-def tree_reshaper(tree, instruction, save_path, new_tree_name):
+def dataframe_reshaper(tree, instruction, range=None, intermediate_tree_save_path=None, vectorization=True):
     """
-        Reshapes a tree according to an instruction
+        Reshapes a tree according to an instruction, resulting in pd.DataFrame
 
         Parameters:
             - tree: a ROOT.TTree object
             - instruction: an instruction, a dictionary in name[string] -> cpp_code[string] format, 
                 that defines tree reshaping
-            - save_path: path to save the reshaped tree to
-            - new_tree_name: name of the new tree
+            - save_path: path to save the resulting dataframe to
+            - range: an iterable of form (begin, end, stride=1). If applied, reshaping is only performed on specified range
+            - intermediate_tree_save_path: reshaped tree save path. If not specified, intermediate tree is discarded
+            - vectorization: if True, performs checks whether there are columns with vector types, effectively replacing them with numpy.arrays.
+                Disabling this feature can increase performance.
+        
+        Returns:
+            - a pd.DataFrame, filled in accordance to instruction
     """
     import ROOT
-    df = ROOT.RDataFrame(tree)
+    import pandas as pd
+    rdf = ROOT.RDataFrame(tree)
     for name, cpp_code in instruction.items():
-        df = df.Define(name, cpp_code)
-    df.Snapshot(new_tree_name, save_path, {*instruction.keys()})
+        rdf = rdf.Define(name, cpp_code)
+
+    if not range == None:
+        rdf = rdf.Range(*range)
+    if not intermediate_tree_save_path == None:
+        rdf.Snapshot('reshaped_tree', intermediate_tree_save_path, {*instruction.keys()})
+    
+    df = rdf.AsNumpy(columns=[*instruction.keys()])
+    df = pd.DataFrame(df)
+
+    if vectorization:
+        import numpy as np
+        for column in df.columns:
+            if len(np.array([df[column][0]]).shape) > 1:
+                for elem in df[column]:
+                    elem = np.array(elem)
+    
+    return df
