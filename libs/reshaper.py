@@ -39,7 +39,8 @@ def save_instruction(file, object):
         import traceback
         print(traceback.print_exc())
 
-def dataframe_reshaper(tree, instruction, range=None, intermediate_tree_save_path=None, vectorization=True):
+
+def dataframe_reshaper(tree, instruction, df_range=None, intermediate_tree_save_path=None, vectorization=True):
     """
         Reshapes a tree according to an instruction, resulting in pd.DataFrame
 
@@ -48,11 +49,11 @@ def dataframe_reshaper(tree, instruction, range=None, intermediate_tree_save_pat
             - instruction: an instruction, a dictionary in name[string] -> cpp_code[string] format, 
                 that defines tree reshaping
             - save_path: path to save the resulting dataframe to
-            - range: an iterable of form (begin, end, stride=1). If applied, reshaping is only performed on specified range
+            - df_range: an iterable of form (begin, end, stride=1). If applied, reshaping is only performed on specified range
             - intermediate_tree_save_path: reshaped tree save path. If not specified, intermediate tree is discarded
             - vectorization: if True, performs checks whether there are columns with vector types, effectively replacing them with numpy.arrays.
-                Disabling this feature can increase performance.
-        
+                Disabling this feature is safe if you do not have vectorized data, otherwise behaviour is not well defined.
+
         Returns:
             - a pd.DataFrame, filled in accordance to instruction
     """
@@ -62,19 +63,23 @@ def dataframe_reshaper(tree, instruction, range=None, intermediate_tree_save_pat
     for name, cpp_code in instruction.items():
         rdf = rdf.Define(name, cpp_code)
 
-    if not range == None:
-        rdf = rdf.Range(*range)
+    if not df_range == None:
+        rdf = rdf.Range(*df_range)
     if not intermediate_tree_save_path == None:
-        rdf.Snapshot('reshaped_tree', intermediate_tree_save_path, {*instruction.keys()})
-    
+        rdf.Snapshot('reshaped_tree', intermediate_tree_save_path,
+                     {*instruction.keys()})
+
     df = rdf.AsNumpy(columns=[*instruction.keys()])
-    df = pd.DataFrame(df)
 
     if vectorization:
         import numpy as np
-        for column in df.columns:
+        for column in df.keys():
+            # check if column is vector-like
             if len(np.array([df[column][0]]).shape) > 1:
-                for elem in df[column]:
-                    elem = np.array(elem)
+                # convert to numpy array
+                for index in range(len(df[column])):
+                    df[column][index] = np.array([df[column][index]])
     
+    df = pd.DataFrame(df)
+
     return df
