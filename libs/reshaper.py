@@ -2,10 +2,10 @@
 
 def load_instruction(file):
     """
-        Load instructions from file
+        Loads instruction from file
 
         Parameters:
-            - file: file to load, written in name[string] -> cpp_code[string] csv format
+            - file: file to load from, written in name[string] -> cpp_code[string] csv format
 
         Returns:
             - an instruction, i.e. a dictionary in name[string] -> cpp_code[string] format
@@ -24,11 +24,11 @@ def load_instruction(file):
 
 def save_instruction(file, object):
     """
-        Save instructions to file
+        Saves instruction to file
 
         Parameters:
             - file: file to save to
-            - object: instruction to save, a dictionary in name[string] -> cpp_code[string] format
+            - object: instruction to save, i.e. a dictionary in name[string] -> cpp_code[string] format
     """
     try:
         import csv
@@ -49,10 +49,10 @@ def dataframe_reshaper(tree, instruction, df_range=None, intermediate_tree_save_
             - instruction: an instruction, a dictionary in name[string] -> cpp_code[string] format, 
                 that defines tree reshaping
             - save_path: path to save the resulting dataframe to
-            - df_range: an iterable of form (begin, end, stride=1). If applied, reshaping is only performed on specified range
+            - df_range: an iterable of form (begin, end, stride=1). If applied, reshaping is only performed on specified range 
             - intermediate_tree_save_path: reshaped tree save path. If not specified, intermediate tree is discarded
             - vectorization: if True, performs checks whether there are columns with vector types, effectively replacing them with lists.
-                Disabling this feature is safe if you do not have vectorized data, otherwise behaviour is not well defined.
+                Disabling this feature is safe if you do not have vectorized data (should be performance cheap anyway), otherwise behaviour is not well defined.
 
         Returns:
             - a pd.DataFrame, filled in accordance to instruction
