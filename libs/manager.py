@@ -114,7 +114,7 @@ class MaNNager:
             dill.dump(self, f, recurse=True)
 
     @staticmethod
-    def load(path):
+    def load(path) -> 'MaNNager':
         """
             Loads a manager from a file
 
